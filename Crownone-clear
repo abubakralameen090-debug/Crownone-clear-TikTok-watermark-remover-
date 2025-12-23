@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CROWNONE CLEAR | Pro TikTok Remover</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        [x-cloak] { display: none !important; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .neon-glow { box-shadow: 0 0 20px rgba(0, 242, 234, 0.2); }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #00f2ea; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-[#050505] text-white min-h-screen" x-data="apiHandler()">
+
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-[#00f2ea15] to-transparent pointer-events-none"></div>
+
+    <nav class="relative z-10 p-8 flex justify-between items-center max-w-7xl mx-auto">
+        <h1 class="text-3xl font-black tracking-tighter">CROWNONE <span class="text-[#00f2ea]">CLEAR</span></h1>
+        <div class="glass px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest text-gray-400">v2.0 Stable</div>
+    </nav>
+
+    <main class="relative z-10 max-w-4xl mx-auto px-6 py-20 text-center">
+        <h2 class="text-6xl font-extrabold mb-4">No Watermark.<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#ff0050] to-[#00f2ea]">No Quality Loss.</span></h2>
+        <p class="text-gray-500 mb-12 text-lg">Download TikTok videos in original HD resolution instantly.</p>
+
+        <div class="glass p-3 rounded-3xl flex flex-col md:flex-row gap-3 neon-glow">
+            <input 
+                type="text" 
+                x-model="url" 
+                placeholder="https://www.tiktok.com/@username/video/..." 
+                class="bg-transparent flex-1 px-6 py-4 outline-none text-lg text-white font-medium"
+            >
+            <button 
+                @click="fetchVideoData()" 
+                class="bg-white text-black font-black px-12 py-4 rounded-2xl hover:bg-[#00f2ea] transition-all flex items-center justify-center"
+                :disabled="isLoading"
+            >
+                <template x-if="!isLoading"><span>Fetch Video</span></template>
+                <template x-if="isLoading"><div class="loader"></div></template>
+            </button>
+        </div>
+
+        <div x-show="result" x-cloak x-transition class="mt-12 glass p-10 rounded-[40px] text-left border-white/5">
+            <div class="flex flex-col md:flex-row gap-10">
+                <div class="relative group w-full md:w-56 shrink-0">
+                    <img :src="result.cover" class="w-full aspect-[9/16] object-cover rounded-3xl shadow-2xl">
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-3xl">
+                        <i class="fa fa-play text-4xl"></i>
+                    </div>
+                </div>
+                
+                <div class="flex-1 flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-[#ff0050] to-[#00f2ea] p-[2px]">
+                            <img :src="result.avatar" class="w-full h-full rounded-full object-cover border-2 border-black">
+                        </div>
+                        <span class="font-bold text-xl" x-text="result.nickname"></span>
+                    </div>
+                    
+                    <p class="text-gray-400 text-sm mb-8 leading-relaxed italic" x-text="result.title"></p>
+
+                    <div class="mt-auto space-y-4">
+                        <button @click="downloadFile(result.video, 'video')" class="w-full bg-[#00f2ea] text-black font-black py-4 rounded-2xl flex items-center justify-center gap-3 hover:brightness-110">
+                            <i class="fa fa-cloud-download text-xl"></i> Download Video (No Watermark)
+                        </button>
+                        <button @click="downloadFile(result.music, 'audio')" class="w-full bg-white/5 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-white/10 transition border border-white/10">
+                            <i class="fa fa-music"></i> Save Audio (MP3)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p x-show="error" x-text="error" class="text-red-500 mt-6 font-bold" x-cloak></p>
+    </main>
+
+    <script>
+        function apiHandler() {
+            return {
+                url: '',
+                isLoading: false,
+                result: null,
+                error: '',
+
+                async fetchVideoData() {
+                    if (!this.url.trim()) return;
+                    this.isLoading = true;
+                    this.error = '';
+                    
+                    try {
+                        // Using the TikWM Public API (Free & No Key Required)
+                        const response = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(this.url)}`);
+                        const data = await response.json();
+
+                        if (data.code === 0) {
+                            this.result = {
+                                title: data.data.title,
+                                cover: data.data.cover,
+                                video: data.data.play, // Clean URL
+                                music: data.data.music,
+                                nickname: data.data.author.nickname,
+                                avatar: data.data.author.avatar
+                            };
+                        } else {
+                            this.error = "Couldn't fetch video. Check the link.";
+                        }
+                    } catch (err) {
+                        this.error = "Connection error. Please try again.";
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                async downloadFile(fileUrl, type) {
+                    // This creates a hidden link and clicks it to force the browser to download
+                    const response = await fetch(fileUrl);
+                    const blob = await response.blob();
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = `CrownoneClear_${type}_${Date.now()}.${type === 'video' ? 'mp4' : 'mp3'}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
